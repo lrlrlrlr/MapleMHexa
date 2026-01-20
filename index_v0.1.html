@@ -2,87 +2,335 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>HEXA Stat Pro Advisor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.0.1"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #1a1a1a; margin: 20px; }
-        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
-        .header { text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px; }
-        h1 { color: #2c3e50; margin-bottom: 8px; font-size: 2rem; }
-        .author-link { font-size: 0.95rem; color: #0088cc; text-decoration: none; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        :root {
+            --primary: #2e86c1;
+            --secondary: #2c3e50;
+            --bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --success-bg: #e8f8f5;
+            --success-text: #27ae60;
+            --danger-bg: #fdedec;
+            --danger-text: #c0392b;
+            --highlight-row: #e3f2fd;
+            --highlight-text: #1565c0;
+        }
 
-        .grid-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-        .input-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 20px; background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--secondary);
+            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+
+        .author-link {
+            font-size: 0.9rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 25px;
+        }
+
+        /* Input Section */
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .instruction-text {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #fff;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+
+        .stats-fieldset {
+            border: 1px solid #d1d9e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #fff;
+        }
+
+        .stats-legend {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            padding: 0 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .fieldset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .fieldset-grid.two-col {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
         .input-group { display: flex; flex-direction: column; }
-        label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; color: #6c757d; }
-        input { padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; }
-        input:invalid { border: 2px solid #e74c3c; }
 
-        button { grid-column: 1 / -1; padding: 14px; background: linear-gradient(135deg, #2e86c1, #21618c); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; margin-top: 10px; }
+        label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            color: #6c757d;
+        }
 
-        .meta-dashboard { background: #2c3e50; color: white; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; }
-        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid #3e4f5f; padding-bottom: 8px; }
+        input {
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            transition: border-color 0.2s;
+            text-align: center;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.15);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2e86c1, #21618c);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 700;
+            box-shadow: 0 4px 6px rgba(46, 134, 193, 0.2);
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        /* Meta Dashboard */
+        .meta-dashboard {
+            background: var(--secondary);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            height: fit-content;
+        }
+        .meta-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; }
         .meta-label { font-size: 0.8rem; color: #bdc3c7; }
         .meta-value { font-family: 'Courier New', monospace; font-weight: bold; color: #3498db; }
 
-        #resultsBox { margin-top: 20px; padding: 25px; border-radius: 10px; border-left: 8px solid #2e86c1; display: none; }
-        .advice-keep { border-color: #27ae60 !important; background: #f0fff4 !important; color: #1e4620; }
-        .advice-reset { border-color: #e74c3c !important; background: #fff5f5 !important; color: #611a15; }
+        /* Results */
+        #resultsBox { margin-top: 25px; display: none; animation: fadeIn 0.3s ease-in; }
+        .result-card { background: white; border: 1px solid #e1e4e8; border-left: 5px solid var(--primary); border-radius: 8px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); margin-bottom: 20px; }
+        .eval-report { background: #fdfefe; border: 1px dashed #d6dbdf; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 0.95rem; color: #444; line-height: 1.7; }
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 8px; border: 1px solid #eee; margin-bottom: 25px; }
+        .scenario-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; min-width: 500px; }
+        .scenario-table th, .scenario-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; }
+        .scenario-table th { background: #f8f9fa; color: #555; font-weight: 700; text-transform: uppercase; font-size: 0.75rem; }
+        .verdict-badge { padding: 6px 10px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; display: inline-block; white-space: nowrap; }
+        .v-keep { background: var(--success-bg); color: var(--success-text); }
+        .v-restart { background: var(--danger-bg); color: var(--danger-text); }
+        .v-start { background: #ebf5fb; color: #2980b9; }
+        .mode-stats { background: #fdfefe; border: 1px dashed #d6dbdf; border-radius: 8px; padding: 15px; font-size: 0.9rem; color: #555; line-height: 1.6; }
 
-        .result-title { font-size: 1.6rem; font-weight: 800; display: block; margin-bottom: 12px; }
-        .result-detail { line-height: 1.7; font-size: 1.05rem; }
-        .outcome-stats { margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1); }
+        /* New Table Highlighting */
+        .row-highlight { background-color: var(--highlight-row) !important; color: var(--highlight-text); font-weight: 700; }
+        .stat-table-header { font-size: 1rem; color: var(--secondary); margin-top: 25px; margin-bottom: 10px; border-left: 4px solid var(--secondary); padding-left: 10px; }
 
-        canvas { margin-top: 30px; width: 100% !important; height: auto !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            .grid-layout { grid-template-columns: 1fr; gap: 20px; }
+            .meta-dashboard { order: 2; }
+            input { font-size: 16px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>HEXA Stat Pro Advisor</h1>
-        <a href="https://t.me/Hirafuu" class="author-link" target="_blank">Contact Author: @Hirafuu</a>
+        <h1>HEXA Stat Pro Advisor v2.4</h1>
+        <a href="https://t.me/Hirafuu" class="author-link" target="_blank">Contact @Hirafuu to report bugs</a>
     </div>
 
     <div class="grid-layout">
-        <div class="input-grid">
-            <div class="input-group"><label>Main Stat Lv</label><input type="number" id="cMain" value="3" min="0" max="10"></div>
-            <div class="input-group"><label>Sub Stat 1 Lv</label><input type="number" id="cSub1" value="5" min="0" max="10"></div>
-            <div class="input-group"><label>Sub Stat 2 Lv</label><input type="number" id="cSub2" value="4" min="0" max="10"></div>
-            <div class="input-group"><label>Main Goal (≥)</label><input type="number" id="tMain" value="7" min="0" max="10"></div>
-            <div class="input-group"><label>Sub Goal (≥)</label><input type="number" id="tSub" value="0" min="0" max="10"></div>
-            <div class="input-group"><label>Billion/Frag</label><input type="number" id="fragPrice" value="0.25" min="0"></div>
-            <button onclick="runSimulation()">Calculate Optimal Strategy</button>
+        <div class="input-section">
+            <div class="instruction-text">
+                <strong>Instructions:</strong> Enter your <em>Current</em> stats below. Then, set your <em>Target</em> goals for when the core reaches Lv.20.
+            </div>
+
+            <fieldset class="stats-fieldset">
+                <legend class="stats-legend">1. Current Progress</legend>
+                <div class="fieldset-grid">
+                    <div class="input-group"><label>Hexa Main Lv</label><input type="number" id="cMain" value="0" min="0" max="10" inputmode="numeric" placeholder="0"></div>
+                    <div class="input-group"><label>Hexa Sub1 Lv</label><input type="number" id="cSub1" value="0" min="0" max="10" inputmode="numeric" placeholder="0"></div>
+                    <div class="input-group"><label>Hexa Sub2 Lv</label><input type="number" id="cSub2" value="0" min="0" max="10" inputmode="numeric" placeholder="0"></div>
+                </div>
+            </fieldset>
+
+            <fieldset class="stats-fieldset">
+                <legend class="stats-legend">2. Desired Outcome (Lv.20)</legend>
+                <div class="fieldset-grid two-col">
+                    <div class="input-group"><label>Main Goal (≥)</label><input type="number" id="tMain" value="8" min="0" max="10" inputmode="numeric"></div>
+                    <div class="input-group"><label>Sub Goal (≥)</label><input type="number" id="tSub" value="10" min="0" max="10" inputmode="numeric"></div>
+                </div>
+            </fieldset>
+
+            <button onclick="runSimulation()">Analyze Path Efficiency</button>
         </div>
 
         <div class="meta-dashboard">
-            <h3 style="margin: 0; font-size: 1rem; text-align: center; color: #3498db;">Real-time Metrics</h3>
-            <div class="meta-item"><span class="meta-label">Total Slots Used</span><span class="meta-value" id="metaClicks">--</span></div>
-            <div class="meta-item"><span class="meta-label">Luck Delta</span><span class="meta-value" id="metaLuck">--</span></div>
-            <div class="meta-item"><span class="meta-label">Success Scenarios</span><span class="meta-value" id="metaSuccess">--</span></div>
-            <div class="meta-item"><span class="meta-label">Simulation Trials</span><span class="meta-value">100,000</span></div>
+            <h3 style="margin: 0; font-size: 0.9rem; text-align: center; color: #3498db; margin-bottom: 10px;">Simulation Metrics</h3>
+            <div class="meta-item"><span class="meta-label">Slots Used</span><span class="meta-value" id="metaClicks">--</span></div>
+            <div class="meta-item"><span class="meta-label">Est. Cost</span><span class="meta-value" id="metaCost">--</span></div>
+            <div class="meta-item"><span class="meta-label">Main Win Rate</span><span class="meta-value" id="metaWinMain">--</span></div>
+            <div class="meta-item"><span class="meta-label">Sub Win Rate</span><span class="meta-value" id="metaWinSub">--</span></div>
         </div>
     </div>
 
     <div id="resultsBox">
-        <span id="adviceLabel" class="result-title"></span>
-        <div id="statsDetails" class="result-detail"></div>
-        <div id="outcomeDetails" class="result-detail outcome-stats"></div>
-    </div>
+        <div class="result-card">
+            <h3 style="margin-bottom: 10px; color: var(--secondary);">Evaluation Report</h3>
+            <div id="textReport" class="eval-report"></div>
 
-    <canvas id="distributionChart"></canvas>
+            <h3 style="margin-bottom: 15px; color: var(--secondary);">Detailed Scenario Table</h3>
+            <div class="table-wrapper">
+                <table class="scenario-table">
+                    <thead>
+                    <tr>
+                        <th>Goal</th>
+                        <th>Cost Here</th>
+                        <th>Cost Restart</th>
+                        <th>Verdict</th>
+                    </tr>
+                    </thead>
+                    <tbody id="scenarioTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mode-stats" id="modeStats"></div>
+        <canvas id="distributionChart"></canvas>
+
+        <div id="statTablesContainer"></div>
+    </div>
 </div>
 
 <script>
     let chartInstance = null;
 
-    // Helper to clamp values between 0 and 10
-    function clamp(val) {
-        return Math.max(0, Math.min(10, val));
+    // --- DATA TRANSCRIPTION FROM IMAGE ---
+    const mainStatsData = [
+        { lv: 1, att: 350, dmg: "1.9%", cd: "1.8%", mdc: "10,000,000", fd: "1.2%", ied: "1.0%" },
+        { lv: 2, att: 500, dmg: "2.7%", cd: "2.6%", mdc: "20,000,000", fd: "1.7%", ied: "1.4%" },
+        { lv: 3, att: 700, dmg: "3.8%", cd: "3.6%", mdc: "30,000,000", fd: "2.4%", ied: "2.0%" },
+        { lv: 4, att: 900, dmg: "4.9%", cd: "4.6%", mdc: "45,000,000", fd: "3.1%", ied: "2.6%" },
+        { lv: 5, att: 1100, dmg: "6.0%", cd: "5.6%", mdc: "60,000,000", fd: "3.8%", ied: "3.2%" },
+        { lv: 6, att: 1400, dmg: "7.6%", cd: "7.1%", mdc: "75,000,000", fd: "4.8%", ied: "4.1%" },
+        { lv: 7, att: 1700, dmg: "9.2%", cd: "8.6%", mdc: "95,000,000", fd: "5.8%", ied: "5.0%" },
+        { lv: 8, att: 2200, dmg: "11.9%", cd: "11.1%", mdc: "125,000,000", fd: "7.5%", ied: "6.5%" },
+        { lv: 9, att: 2700, dmg: "14.6%", cd: "13.6%", mdc: "180,000,000", fd: "9.2%", ied: "8.0%" },
+        { lv: 10, att: 3400, dmg: "18.4%", cd: "17.1%", mdc: "250,000,000", fd: "11.6%", ied: "10.1%" }
+    ];
+
+    const subStatsData = [
+        { lv: 1, att: 175, dmg: "1.0%", cd: "0.9%", mdc: "5,000,000", fd: "0.6%", ied: "0.5%" },
+        { lv: 2, att: 250, dmg: "1.4%", cd: "1.3%", mdc: "10,000,000", fd: "0.9%", ied: "0.7%" },
+        { lv: 3, att: 350, dmg: "1.9%", cd: "1.8%", mdc: "15,000,000", fd: "1.2%", ied: "1.0%" },
+        { lv: 4, att: 450, dmg: "2.5%", cd: "2.3%", mdc: "22,500,000", fd: "1.6%", ied: "1.3%" },
+        { lv: 5, att: 550, dmg: "3.0%", cd: "2.8%", mdc: "30,000,000", fd: "1.9%", ied: "1.6%" },
+        { lv: 6, att: 700, dmg: "3.8%", cd: "3.6%", mdc: "37,500,000", fd: "2.4%", ied: "2.1%" },
+        { lv: 7, att: 850, dmg: "4.6%", cd: "4.3%", mdc: "47,500,000", fd: "2.9%", ied: "2.5%" },
+        { lv: 8, att: 1100, dmg: "6.0%", cd: "5.6%", mdc: "62,500,000", fd: "3.8%", ied: "3.3%" },
+        { lv: 9, att: 1350, dmg: "7.3%", cd: "6.8%", mdc: "90,000,000", fd: "4.6%", ied: "4.0%" },
+        { lv: 10, att: 1700, dmg: "9.2%", cd: "8.6%", mdc: "125,000,000", fd: "5.8%", ied: "5.1%" }
+    ];
+
+    // --- UTILITIES ---
+    function clamp(val) { return Math.max(0, Math.min(10, val)); }
+
+    function getModeTriplet(arr) {
+        const counts = {};
+        let maxCount = 0;
+        let mode = "N/A";
+        for (const item of arr) {
+            const key = item.join(",");
+            counts[key] = (counts[key] || 0) + 1;
+            if (counts[key] > maxCount) {
+                maxCount = counts[key];
+                mode = key;
+            }
+        }
+        return { val: `(${mode})`, percent: (maxCount / arr.length * 100).toFixed(1) };
     }
 
+    function getModeCost(arr) {
+        const counts = {};
+        let maxCount = 0;
+        let mode = arr[0];
+        for (const val of arr) {
+            counts[val] = (counts[val] || 0) + 1;
+            if (counts[val] > maxCount) {
+                maxCount = counts[val];
+                mode = val;
+            }
+        }
+        return { val: mode, percent: (maxCount / arr.length * 100).toFixed(1) };
+    }
+
+    // --- GAME CONSTANTS ---
     function get_main_rate(lvl) {
         if (lvl >= 10) return 0.0;
         const rates = {0: 0.35, 1: 0.35, 2: 0.20, 3: 0.20, 4: 0.20, 5: 0.20, 6: 0.15, 7: 0.10, 8: 0.05, 9: 0.05};
@@ -97,90 +345,222 @@
         return 50;
     }
 
-    function simulate_remaining(m, s1, s2) {
-        let cur_m = m, cur_s1 = s1, cur_s2 = s2, frags = 0, used = cur_m + cur_s1 + cur_s2;
+    // --- CORE SIMULATION ENGINE ---
+    function simulate_core(start_m, start_s1, start_s2, target_m, target_s) {
+        let m = start_m, s1 = start_s1, s2 = start_s2;
+        let cost = 0;
+        let used = m + s1 + s2;
+
         for (let i = 0; i < (20 - used); i++) {
-            frags += get_cost(cur_m);
-            let m_r = get_main_rate(cur_m), s1_r = cur_s1 < 10 ? 0.325 : 0.0, s2_r = cur_s2 < 10 ? 0.325 : 0.0;
-            let total_w = m_r + s1_r + s2_r;
-            if (total_w <= 0) break;
-            let roll = Math.random() * total_w;
-            if (roll < m_r) cur_m++; else if (roll < m_r + s1_r) cur_s1++; else cur_s2++;
+            cost += get_cost(m);
+            let m_rate = get_main_rate(m);
+            let rem_prob = 1.0 - m_rate;
+            let s1_open = s1 < 10;
+            let s2_open = s2 < 10;
+            let s1_rate = 0.0;
+            if (s1_open && s2_open) {
+                s1_rate = rem_prob / 2;
+            } else if (s1_open) {
+                s1_rate = rem_prob;
+            } else if (s2_open) {
+                s1_rate = 0.0;
+            } else {
+                s1_rate = 0.0;
+                m_rate = 1.0;
+            }
+            let roll = Math.random();
+            if (roll < m_rate) {
+                m++;
+            } else if (roll < (m_rate + s1_rate)) {
+                s1++;
+            } else {
+                s2++;
+            }
         }
-        return [cur_m, cur_s1, cur_s2, frags];
+        let hit_main = (m >= target_m);
+        let hit_sub = (target_s > 0) && (s1 >= target_s || s2 >= target_s);
+        let hit_any = hit_main || hit_sub;
+        return { m, s1, s2, cost, hit_main, hit_sub, hit_any };
+    }
+
+    // --- EFFICIENCY CALCULATOR ---
+    function calculate_efficiency(avg_cost, p_success, baseline_e) {
+        if (p_success <= 0) return Infinity;
+        return avg_cost + ((1 - p_success) * baseline_e);
+    }
+
+    function get_verdict_html(e_cur, e_base, p_cur, slots) {
+        if (slots === 0) return `<span class="verdict-badge v-start">START</span>`;
+        if (e_cur === Infinity) return `<span class="verdict-badge v-restart">IMPOSSIBLE</span>`;
+        if (slots <= 3 && p_cur < 0.01) return `<span class="verdict-badge v-restart">BAD START</span>`;
+        if (slots <= 3) return `<span class="verdict-badge v-keep">KEEP (Early)</span>`;
+        let diff = e_cur - e_base;
+        if (diff > 0.1) {
+            let save = Math.round(diff);
+            return `<span class="verdict-badge v-restart">RESTART</span> <div style="font-size:0.75em; color:#999; margin-top:2px;">Save ~${save}</div>`;
+        } else {
+            let save = Math.round(Math.abs(diff));
+            return `<span class="verdict-badge v-keep">KEEP</span> <div style="font-size:0.75em; color:#999; margin-top:2px;">Save ~${save}</div>`;
+        }
+    }
+
+    // --- NEW: RENDER ATTRIBUTE TABLES ---
+    function renderStatTables(mainLvl, sub1Lvl, sub2Lvl) {
+        let html = `
+        <h3 class="stat-table-header">Main Attribute Standard</h3>
+        <div class="table-wrapper"><table class="scenario-table">
+            <thead><tr><th>Lv</th><th>Att</th><th>DMG</th><th>Crit DMG</th><th>MDC</th><th>Final DMG</th><th>IED</th></tr></thead>
+            <tbody>`;
+
+        mainStatsData.forEach(row => {
+            let hl = (row.lv === mainLvl) ? ' class="row-highlight"' : '';
+            html += `<tr${hl}><td>${row.lv}</td><td>${row.att}</td><td>${row.dmg}</td><td>${row.cd}</td><td>${row.mdc}</td><td>${row.fd}</td><td>${row.ied}</td></tr>`;
+        });
+
+        html += `</tbody></table></div>
+        <h3 class="stat-table-header">Additional Attribute Standard</h3>
+        <div class="table-wrapper"><table class="scenario-table">
+            <thead><tr><th>Lv</th><th>Att</th><th>DMG</th><th>Crit DMG</th><th>MDC</th><th>Final DMG</th><th>IED</th></tr></thead>
+            <tbody>`;
+
+        subStatsData.forEach(row => {
+            let hl = (row.lv === sub1Lvl || row.lv === sub2Lvl) ? ' class="row-highlight"' : '';
+            html += `<tr${hl}><td>${row.lv}</td><td>${row.att}</td><td>${row.dmg}</td><td>${row.cd}</td><td>${row.mdc}</td><td>${row.fd}</td><td>${row.ied}</td></tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        document.getElementById('statTablesContainer').innerHTML = html;
     }
 
     function runSimulation() {
-        // Sanitize inputs
         const cM = clamp(parseInt(document.getElementById('cMain').value) || 0);
         const cS1 = clamp(parseInt(document.getElementById('cSub1').value) || 0);
         const cS2 = clamp(parseInt(document.getElementById('cSub2').value) || 0);
         const tM = clamp(parseInt(document.getElementById('tMain').value) || 0);
         const tS = clamp(parseInt(document.getElementById('tSub').value) || 0);
-        const price = Math.max(0, parseFloat(document.getElementById('fragPrice').value) || 0);
-
-        // Update UI to show clamped values
-        document.getElementById('cMain').value = cM;
-        document.getElementById('cSub1').value = cS1;
-        document.getElementById('cSub2').value = cS2;
-        document.getElementById('tMain').value = tM;
-        document.getElementById('tSub').value = tS;
-
         const trials = 500000;
-        let curRes = [], baseRes = [], curWins = 0, baseWins = 0;
-        let sumCurFrags = 0, sumBaseFrags = 0, sumCurM = 0, sumCurS1 = 0, sumCurS2 = 0;
+        const slotsUsed = cM + cS1 + cS2;
+        const activationCost = 10;
 
-        for (let i = 0; i < trials; i++) {
-            let r = simulate_remaining(cM, cS1, cS2); curRes.push(r);
-            sumCurFrags += r[3];
-            sumCurM += r[0]; sumCurS1 += r[1]; sumCurS2 += r[2];
-            if ((tM > 0 && r[0] >= tM) || (tS > 0 && (r[1] >= tS || r[2] >= tS))) curWins++;
-
-            let b = simulate_remaining(0, 0, 0); baseRes.push(b);
-            sumBaseFrags += (b[3] + 10);
-            if ((tM > 0 && b[0] >= tM) || (tS > 0 && (b[1] >= tS || b[2] >= tS))) baseWins++;
+        // 1. BASELINE SIMULATION
+        let baseSumCost = 0;
+        let baseWinsMain = 0, baseWinsSub = 0, baseWinsAny = 0;
+        for(let i=0; i<trials; i++) {
+            let res = simulate_core(0, 0, 0, tM, tS);
+            baseSumCost += (res.cost + activationCost);
+            if (res.hit_main) baseWinsMain++;
+            if (res.hit_sub) baseWinsSub++;
+            if (res.hit_any) baseWinsAny++;
         }
+        let avgBaseCost = baseSumCost / trials;
+        let pBaseMain = baseWinsMain / trials;
+        let pBaseSub = baseWinsSub / trials;
+        let pBaseAny = baseWinsAny / trials;
+        let eBaseMain = pBaseMain > 0 ? avgBaseCost / pBaseMain : Infinity;
+        let eBaseSub = pBaseSub > 0 ? avgBaseCost / pBaseSub : Infinity;
+        let eBaseAny = pBaseAny > 0 ? avgBaseCost / pBaseAny : Infinity;
 
-        const pCur = curWins / trials, pBase = baseWins / trials;
-        const avgCurFrags = sumCurFrags / trials;
-        const avgBaseFrags = sumBaseFrags / trials;
-        const expectedAttemptsBase = 1 / (pBase || 0.0001);
-        const expTotalBaseFrags = avgBaseFrags * expectedAttemptsBase;
-        const expTotalCurFrags = avgCurFrags + ((1 - pCur) / (pCur || 0.0001)) * expTotalBaseFrags;
+        // 2. CURRENT PATH SIMULATION
+        let curSumCost = 0;
+        let curWinsMain = 0, curWinsSub = 0, curWinsAny = 0;
+        let finalStats = [];
+        let costList = [];
+        for(let i=0; i<trials; i++) {
+            let res = simulate_core(cM, cS1, cS2, tM, tS);
+            curSumCost += res.cost;
+            costList.push(res.cost);
+            if (res.hit_main) curWinsMain++;
+            if (res.hit_sub) curWinsSub++;
+            if (res.hit_any) curWinsAny++;
+            finalStats.push([res.m, res.s1, res.s2]);
+        }
+        let avgCurCost = curSumCost / trials;
+        let pCurMain = curWinsMain / trials;
+        let pCurSub = curWinsSub / trials;
+        let pCurAny = curWinsAny / trials;
+        let modeCostData = getModeCost(costList);
 
-        document.getElementById('metaClicks').innerText = cM + cS1 + cS2 + " / 20";
-        const luckDelta = (pCur - pBase) * 100;
-        document.getElementById('metaLuck').innerText = (luckDelta > 0 ? "+" : "") + luckDelta.toFixed(2) + "%";
-        document.getElementById('metaLuck').style.color = luckDelta > -0.2 ? "#27ae60" : "#e74c3c";
-        document.getElementById('metaSuccess').innerText = curWins.toLocaleString() + " hits";
+        // 3. EFFICIENCY CALCS
+        let eCurMain = calculate_efficiency(avgCurCost, pCurMain, eBaseMain);
+        let eCurSub = calculate_efficiency(avgCurCost, pCurSub, eBaseSub);
+        let eCurAny = calculate_efficiency(avgCurCost, pCurAny, eBaseAny);
 
-        const box = document.getElementById('resultsBox');
-        box.style.display = "block";
-        const adviceLabel = document.getElementById('adviceLabel');
+        // 4. UI UPDATES
+        document.getElementById('metaClicks').innerText = slotsUsed + " / 20";
+        document.getElementById('metaCost').innerText = Math.round(avgCurCost) + " frags";
+        document.getElementById('metaWinMain').innerText = (pCurMain * 100).toFixed(2) + "%";
+        document.getElementById('metaWinSub').innerText = (tS > 0) ? (pCurSub * 100).toFixed(2) + "%" : "N/A";
 
-        if (pCur < (pBase - 0.002)) {
-            adviceLabel.innerText = "RECOMMENDATION: RESTART CORE";
-            box.className = "advice-reset";
+        // GENERATE TEXT REPORT
+        let mainEffText = (eCurMain <= eBaseMain) ? "<span style='color:green'>efficient</span>" : "<span style='color:red'>not efficient</span>";
+        let subEffText = (eCurSub <= eBaseSub) ? "<span style='color:green'>efficient</span>" : "<span style='color:red'>not efficient</span>";
+
+        let reportHTML = `
+            • Success probability with current stats is <strong>${(pCurMain*100).toFixed(2)}%</strong> to reach Main≥${tM} (${mainEffText})`;
+
+        if (tS > 0) {
+            reportHTML += `, or <strong>${(pCurSub*100).toFixed(2)}%</strong> to reach Sub≥${tS} (${subEffText}).`;
         } else {
-            adviceLabel.innerText = "RECOMMENDATION: KEEP ENHANCING";
-            box.className = "advice-keep";
+            reportHTML += `.`;
         }
 
-        document.getElementById('statsDetails').innerHTML = `
-            To complete this current core to LV20, you need to use <b>${avgCurFrags.toFixed(1)} fragments</b> (${(avgCurFrags * price).toFixed(2)}B mesos). 
-            Doing so gives you a <b>${(pCur * 100).toFixed(2)}%</b> success rate. <br>
-            To restart, you are expected to spend <b>${avgBaseFrags.toFixed(1)} fragments</b> per attempt from LV0 to LV20, 
-            and you will have a <b>${(pBase * 100).toFixed(2)}%</b> baseline to reach your goal 
-            (approx. <b>${expectedAttemptsBase.toFixed(1)} attempts</b> to succeed, costing <b>${expTotalBaseFrags.toFixed(0)} total fragments</b> | <b>${(expTotalBaseFrags * price).toFixed(2)}B mesos</b>).
+        let baselineAttempts = (pBaseMain > 0) ? (1 / pBaseMain).toFixed(1) : "Inf";
+
+        reportHTML += `
+            <br>• A fresh start has a <strong>${(pBaseMain*100).toFixed(2)}%</strong> baseline win rate (Main).
+            <br>• To complete this to LV20, you need to use <strong>${Math.round(avgCurCost)} frags</strong>. Most likely (<strong>${modeCostData.percent}%</strong> of cases) will cost <strong>${modeCostData.val} frags</strong>.
+            <br>• To restart, you are expected to spend <strong>${Math.round(avgBaseCost)} frags</strong> per attempt. Total expected investment for success: <strong>${Math.round(eBaseMain)} frags</strong> (~${baselineAttempts} attempts).
         `;
 
-        document.getElementById('outcomeDetails').innerHTML = `
-            <b>Expected Final Stats:</b> Main Lv <b>${(sumCurM/trials).toFixed(2)}</b>, 
-            Sub1 Lv <b>${(sumCurS1/trials).toFixed(2)}</b>, 
-            Sub2 Lv <b>${(sumCurS2/trials).toFixed(2)}</b>
+        document.getElementById('textReport').innerHTML = reportHTML;
+
+        // Build Table (Original logic preserved)
+        let tableHTML = "";
+
+        tableHTML += `
+            <tr>
+                <td><strong>Main ≥ ${tM}</strong><br><span style="font-size:0.8em; color:#888;">Win: ${(pCurMain*100).toFixed(2)}%</span></td>
+                <td>${eCurMain === Infinity ? "∞" : Math.round(eCurMain)}</td>
+                <td>${Math.round(eBaseMain)}</td>
+                <td>${get_verdict_html(eCurMain, eBaseMain, pCurMain, slotsUsed)}</td>
+            </tr>
         `;
 
-        updateChart(curRes, trials, tM);
+        if (tS > 0) {
+            tableHTML += `
+                <tr>
+                    <td><strong>Sub ≥ ${tS}</strong><br><span style="font-size:0.8em; color:#888;">Win: ${(pCurSub*100).toFixed(2)}%</span></td>
+                    <td>${eCurSub === Infinity ? "∞" : Math.round(eCurSub)}</td>
+                    <td>${Math.round(eBaseSub)}</td>
+                    <td>${get_verdict_html(eCurSub, eBaseSub, pCurSub, slotsUsed)}</td>
+                </tr>
+                <tr>
+                    <td><strong>Any Goal</strong><br><span style="font-size:0.8em; color:#888;">Win: ${(pCurAny*100).toFixed(2)}%</span></td>
+                    <td>${Math.round(eCurAny)}</td>
+                    <td>${Math.round(eBaseAny)}</td>
+                    <td>${get_verdict_html(eCurAny, eBaseAny, pCurAny, slotsUsed)}</td>
+                </tr>
+            `;
+        }
+
+        document.getElementById('scenarioTableBody').innerHTML = tableHTML;
+        document.getElementById('resultsBox').style.display = "block";
+
+        let modeTriplet = getModeTriplet(finalStats);
+        document.getElementById('modeStats').innerHTML = `
+            From your Current Hexa Level (Main ${cM}, Sub ${cS1}, Sub ${cS2}), you are most likely (<strong>${modeTriplet.percent}%</strong>) to have ${modeTriplet.val} at level 20.
+        `;
+
+        updateChart(finalStats, trials, tM);
+
+        // --- RENDER TABLES with Highlighting ---
+        // Extract raw numbers from "(4,6,10)" string
+        let modeStr = modeTriplet.val.replace(/[()]/g, '');
+        let modeArr = modeStr.split(',').map(Number); // e.g. [4, 6, 10]
+
+        if (modeArr.length === 3) {
+            renderStatTables(modeArr[0], modeArr[1], modeArr[2]);
+        }
     }
 
     function updateChart(data, trials, tM) {
@@ -194,22 +574,24 @@
             data: {
                 labels: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
                 datasets: [
-                    { label: 'Main Stat', data: mainC.map(c => (c / trials) * 100), borderColor: '#2e86c1', backgroundColor: 'rgba(46, 134, 193, 0.1)', fill: true, tension: 0.4, borderWidth: 3.5 },
-                    { label: 'Sub Stat 1', data: s1C.map(c => (c / trials) * 100), borderColor: '#d35400', tension: 0.4, borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0 },
-                    { label: 'Sub Stat 2', data: s2C.map(c => (c / trials) * 100), borderColor: '#27ae60', tension: 0.4, borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0 }
+                    { label: 'Main', data: mainC.map(c => (c / trials) * 100), borderColor: '#2e86c1', backgroundColor: 'rgba(46, 134, 193, 0.1)', fill: true, tension: 0.4, borderWidth: 3.5 },
+                    { label: 'Sub1', data: s1C.map(c => (c / trials) * 100), borderColor: '#d35400', tension: 0.4, borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0 },
+                    { label: 'Sub2', data: s2C.map(c => (c / trials) * 100), borderColor: '#27ae60', tension: 0.4, borderWidth: 1.5, borderDash: [3, 3], pointRadius: 0 }
                 ]
             },
             options: {
+                responsive: true,
+                maintainAspectRatio: true,
                 plugins: {
                     annotation: {
                         annotations: {
-                            line1: { type: 'line', xMin: tM, xMax: tM, borderColor: 'rgba(46, 134, 193, 0.6)', borderWidth: 3, borderDash: [6, 6], label: { display: true, content: 'Target Level', backgroundColor: 'rgba(46, 134, 193, 0.8)', color: 'white' } }
+                            line1: { type: 'line', xMin: tM, xMax: tM, borderColor: '#2e86c1', borderWidth: 2, borderDash: [5, 5], label: { display: true, content: 'Target', position: 'end' } }
                         }
                     }
                 },
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Probability (%)' } },
-                    x: { title: { display: true, text: 'Final Level' } }
+                    y: { beginAtZero: true, title: { display: true, text: 'Prob %' } },
+                    x: { title: { display: true, text: 'Final Lv' } }
                 }
             }
         });
