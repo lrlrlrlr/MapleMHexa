@@ -18,6 +18,7 @@
         .input-group { display: flex; flex-direction: column; }
         label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; color: #6c757d; }
         input { padding: 10px; border: 1px solid #ced4da; border-radius: 6px; font-size: 1rem; }
+        input:invalid { border: 2px solid #e74c3c; }
 
         button { grid-column: 1 / -1; padding: 14px; background: linear-gradient(135deg, #2e86c1, #21618c); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: 600; margin-top: 10px; }
 
@@ -26,12 +27,13 @@
         .meta-label { font-size: 0.8rem; color: #bdc3c7; }
         .meta-value { font-family: 'Courier New', monospace; font-weight: bold; color: #3498db; }
 
-        #resultsBox { margin-top: 20px; padding: 20px; border-radius: 10px; border-left: 8px solid #2e86c1; display: none; }
+        #resultsBox { margin-top: 20px; padding: 25px; border-radius: 10px; border-left: 8px solid #2e86c1; display: none; }
         .advice-keep { border-color: #27ae60 !important; background: #f0fff4 !important; color: #1e4620; }
         .advice-reset { border-color: #e74c3c !important; background: #fff5f5 !important; color: #611a15; }
 
-        .result-title { font-size: 1.6rem; font-weight: 800; display: block; margin-bottom: 10px; }
-        .result-detail { line-height: 1.6; font-size: 1.05rem; }
+        .result-title { font-size: 1.6rem; font-weight: 800; display: block; margin-bottom: 12px; }
+        .result-detail { line-height: 1.7; font-size: 1.05rem; }
+        .outcome-stats { margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(0,0,0,0.1); }
 
         canvas { margin-top: 30px; width: 100% !important; height: auto !important; }
     </style>
@@ -46,19 +48,19 @@
 
     <div class="grid-layout">
         <div class="input-grid">
-            <div class="input-group"><label>Main Stat Lv</label><input type="number" id="cMain" value="3"></div>
-            <div class="input-group"><label>Sub Stat 1 Lv</label><input type="number" id="cSub1" value="5"></div>
-            <div class="input-group"><label>Sub Stat 2 Lv</label><input type="number" id="cSub2" value="4"></div>
-            <div class="input-group"><label>Main Goal (≥)</label><input type="number" id="tMain" value="7"></div>
-            <div class="input-group"><label>Sub Goal (≥)</label><input type="number" id="tSub" value="0"></div>
-            <div class="input-group"><label>Meso/Frag (B)</label><input type="number" id="fragPrice" value="0.25"></div>
+            <div class="input-group"><label>Main Stat Lv</label><input type="number" id="cMain" value="3" min="0" max="10"></div>
+            <div class="input-group"><label>Sub Stat 1 Lv</label><input type="number" id="cSub1" value="5" min="0" max="10"></div>
+            <div class="input-group"><label>Sub Stat 2 Lv</label><input type="number" id="cSub2" value="4" min="0" max="10"></div>
+            <div class="input-group"><label>Main Goal (≥)</label><input type="number" id="tMain" value="7" min="0" max="10"></div>
+            <div class="input-group"><label>Sub Goal (≥)</label><input type="number" id="tSub" value="0" min="0" max="10"></div>
+            <div class="input-group"><label>Billion/Frag</label><input type="number" id="fragPrice" value="0.25" min="0"></div>
             <button onclick="runSimulation()">Calculate Optimal Strategy</button>
         </div>
 
         <div class="meta-dashboard">
             <h3 style="margin: 0; font-size: 1rem; text-align: center; color: #3498db;">Real-time Metrics</h3>
             <div class="meta-item"><span class="meta-label">Total Slots Used</span><span class="meta-value" id="metaClicks">--</span></div>
-            <div class="meta-item"><span class="meta-label">Luck Delta (vs Baseline)</span><span class="meta-value" id="metaLuck">--</span></div>
+            <div class="meta-item"><span class="meta-label">Luck Delta</span><span class="meta-value" id="metaLuck">--</span></div>
             <div class="meta-item"><span class="meta-label">Success Scenarios</span><span class="meta-value" id="metaSuccess">--</span></div>
             <div class="meta-item"><span class="meta-label">Simulation Trials</span><span class="meta-value">100,000</span></div>
         </div>
@@ -67,6 +69,7 @@
     <div id="resultsBox">
         <span id="adviceLabel" class="result-title"></span>
         <div id="statsDetails" class="result-detail"></div>
+        <div id="outcomeDetails" class="result-detail outcome-stats"></div>
     </div>
 
     <canvas id="distributionChart"></canvas>
@@ -74,6 +77,11 @@
 
 <script>
     let chartInstance = null;
+
+    // Helper to clamp values between 0 and 10
+    function clamp(val) {
+        return Math.max(0, Math.min(10, val));
+    }
 
     function get_main_rate(lvl) {
         if (lvl >= 10) return 0.0;
@@ -103,28 +111,42 @@
     }
 
     function runSimulation() {
-        const cM = parseInt(document.getElementById('cMain').value) || 0;
-        const cS1 = parseInt(document.getElementById('cSub1').value) || 0;
-        const cS2 = parseInt(document.getElementById('cSub2').value) || 0;
-        const tM = parseInt(document.getElementById('tMain').value) || 0;
-        const tS = parseInt(document.getElementById('tSub').value) || 0;
-        const price = parseFloat(document.getElementById('fragPrice').value) || 0;
+        // Sanitize inputs
+        const cM = clamp(parseInt(document.getElementById('cMain').value) || 0);
+        const cS1 = clamp(parseInt(document.getElementById('cSub1').value) || 0);
+        const cS2 = clamp(parseInt(document.getElementById('cSub2').value) || 0);
+        const tM = clamp(parseInt(document.getElementById('tMain').value) || 0);
+        const tS = clamp(parseInt(document.getElementById('tSub').value) || 0);
+        const price = Math.max(0, parseFloat(document.getElementById('fragPrice').value) || 0);
 
-        const trials = 50000;
+        // Update UI to show clamped values
+        document.getElementById('cMain').value = cM;
+        document.getElementById('cSub1').value = cS1;
+        document.getElementById('cSub2').value = cS2;
+        document.getElementById('tMain').value = tM;
+        document.getElementById('tSub').value = tS;
+
+        const trials = 500000;
         let curRes = [], baseRes = [], curWins = 0, baseWins = 0;
+        let sumCurFrags = 0, sumBaseFrags = 0, sumCurM = 0, sumCurS1 = 0, sumCurS2 = 0;
 
         for (let i = 0; i < trials; i++) {
             let r = simulate_remaining(cM, cS1, cS2); curRes.push(r);
+            sumCurFrags += r[3];
+            sumCurM += r[0]; sumCurS1 += r[1]; sumCurS2 += r[2];
             if ((tM > 0 && r[0] >= tM) || (tS > 0 && (r[1] >= tS || r[2] >= tS))) curWins++;
+
             let b = simulate_remaining(0, 0, 0); baseRes.push(b);
+            sumBaseFrags += (b[3] + 10);
             if ((tM > 0 && b[0] >= tM) || (tS > 0 && (b[1] >= tS || b[2] >= tS))) baseWins++;
         }
 
         const pCur = curWins / trials, pBase = baseWins / trials;
-        const avgFresh = (baseRes.reduce((a, b) => a + b[3], 0) / trials) + 10;
-        const expBase = avgFresh / (pBase || 0.0001);
-        const avgRem = curRes.reduce((a, b) => a + b[3], 0) / trials;
-        const expCur = avgRem + ((1 - pCur) / (pCur || 0.0001)) * expBase;
+        const avgCurFrags = sumCurFrags / trials;
+        const avgBaseFrags = sumBaseFrags / trials;
+        const expectedAttemptsBase = 1 / (pBase || 0.0001);
+        const expTotalBaseFrags = avgBaseFrags * expectedAttemptsBase;
+        const expTotalCurFrags = avgCurFrags + ((1 - pCur) / (pCur || 0.0001)) * expTotalBaseFrags;
 
         document.getElementById('metaClicks').innerText = cM + cS1 + cS2 + " / 20";
         const luckDelta = (pCur - pBase) * 100;
@@ -136,7 +158,6 @@
         box.style.display = "block";
         const adviceLabel = document.getElementById('adviceLabel');
 
-        // Logic Update: If Current < Baseline - 0.2%, then RESTART
         if (pCur < (pBase - 0.002)) {
             adviceLabel.innerText = "RECOMMENDATION: RESTART CORE";
             box.className = "advice-reset";
@@ -146,9 +167,17 @@
         }
 
         document.getElementById('statsDetails').innerHTML = `
-            Success probability with current stats is <b>${(pCur * 100).toFixed(2)}%</b>.<br>
-            A fresh start has a <b>${(pBase * 100).toFixed(2)}%</b> baseline win rate.<br>
-            Projected total cost to reach goal: <b>${expCur.toFixed(1)} Fragments</b> (~${(expCur * price).toFixed(2)}B Mesos).
+            To complete this current core to LV20, you need to use <b>${avgCurFrags.toFixed(1)} fragments</b> (${(avgCurFrags * price).toFixed(2)}B mesos). 
+            Doing so gives you a <b>${(pCur * 100).toFixed(2)}%</b> success rate. <br>
+            To restart, you are expected to spend <b>${avgBaseFrags.toFixed(1)} fragments</b> per attempt from LV0 to LV20, 
+            and you will have a <b>${(pBase * 100).toFixed(2)}%</b> baseline to reach your goal 
+            (approx. <b>${expectedAttemptsBase.toFixed(1)} attempts</b> to succeed, costing <b>${expTotalBaseFrags.toFixed(0)} total fragments</b> | <b>${(expTotalBaseFrags * price).toFixed(2)}B mesos</b>).
+        `;
+
+        document.getElementById('outcomeDetails').innerHTML = `
+            <b>Expected Final Stats:</b> Main Lv <b>${(sumCurM/trials).toFixed(2)}</b>, 
+            Sub1 Lv <b>${(sumCurS1/trials).toFixed(2)}</b>, 
+            Sub2 Lv <b>${(sumCurS2/trials).toFixed(2)}</b>
         `;
 
         updateChart(curRes, trials, tM);
@@ -176,12 +205,11 @@
                         annotations: {
                             line1: { type: 'line', xMin: tM, xMax: tM, borderColor: 'rgba(46, 134, 193, 0.6)', borderWidth: 3, borderDash: [6, 6], label: { display: true, content: 'Target Level', backgroundColor: 'rgba(46, 134, 193, 0.8)', color: 'white' } }
                         }
-                    },
-                    legend: { labels: { font: { weight: 'bold' } } }
+                    }
                 },
                 scales: {
-                    y: { beginAtZero: true, title: { display: true, text: 'Probability (%)', font: { weight: 'bold' } } },
-                    x: { title: { display: true, text: 'Final Level', font: { weight: 'bold' } } }
+                    y: { beginAtZero: true, title: { display: true, text: 'Probability (%)' } },
+                    x: { title: { display: true, text: 'Final Level' } }
                 }
             }
         });
