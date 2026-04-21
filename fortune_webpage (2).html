@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今日楓之谷算卦系統</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple-light: #EEEDFE;
+      --purple-mid: #AFA9EC;
+      --purple-strong: #7F77DD;
+      --purple-deep: #534AB7;
+      --purple-dark: #3C3489;
+      --green-light: #EAF3DE;
+      --green-mid: #3B6D11;
+      --red-light: #FCEBEB;
+      --red-mid: #A32D2D;
+      --gold: #FAC775;
+      --teal: #5DCAA5;
+      --bg: #0d0b1a;
+      --surface: #161228;
+      --surface2: #1e1838;
+      --border: rgba(127, 119, 221, 0.25);
+      --text-primary: #f0eeff;
+      --text-secondary: #9992cc;
+      --text-muted: #5e5894;
+    }
+
+    body {
+      font-family: 'Noto Serif TC', serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Star field background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 45% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 70% 40%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 85% 15%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 30% 60%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 60% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,0.4) 0%, transparent 100%),
+        radial-gradient(1px 1px at 55% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 25% 45%, rgba(175,169,236,0.6) 0%, transparent 100%),
+        radial-gradient(1px 1px at 78% 62%, rgba(250,199,117,0.5) 0%, transparent 100%),
+        radial-gradient(1px 1px at 40% 88%, rgba(93,202,165,0.4) 0%, transparent 100%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Ambient glow */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(83,74,183,0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+    }
+
+    .header-maple {
+      font-size: 13px;
+      letter-spacing: 0.25em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      opacity: 0.8;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      letter-spacing: 0.05em;
+    }
+
+    .header-sub {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 180px;
+      margin-top: 12px;
+    }
+    .divider-line { flex: 1; height: 0.5px; background: var(--border); }
+    .divider-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--purple-strong); }
+
+    /* Orb wrapper */
+    .orb-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .orb-outer-ring {
+      position: absolute;
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 1px dashed rgba(127,119,221,0.3);
+      animation: spin 12s linear infinite;
+    }
+
+    .orb-outer-ring-2 {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 1px dashed rgba(250,199,117,0.2);
+      animation: spin 8s linear infinite reverse;
+    }
+
+    .orb {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 35%, #534AB7, #26215C 70%);
+      border: 1.5px solid rgba(127,119,221,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease;
+      box-shadow:
+        0 0 30px rgba(83,74,183,0.4),
+        0 0 60px rgba(83,74,183,0.15),
+        inset 0 0 20px rgba(175,169,236,0.1);
+    }
+
+    .orb::before {
+      content: '';
+      position: absolute;
+      top: 14%;
+      left: 22%;
+      width: 35%;
+      height: 22%;
+      background: rgba(255,255,255,0.12);
+      border-radius: 50%;
+      transform: rotate(-30deg);
+      pointer-events: none;
+    }
+
+    .orb:active { transform: scale(0.93); }
+
+    /* Floating particles around orb */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .p1 { width:8px; height:8px; background:var(--gold); top:-10px; left:50px; animation:orbFloat 3s ease-in-out infinite; }
+    .p2 { width:6px; height:6px; background:var(--purple-mid); top:20px; right:-8px; animation:orbFloat 3.8s ease-in-out 0.5s infinite reverse; }
+    .p3 { width:5px; height:5px; background:var(--teal); bottom:-8px; left:30px; animation:orbFloat 2.8s ease-in-out 1s infinite; }
+    .p4 { width:7px; height:7px; background:#F4C0D1; bottom:15px; right:-5px; animation:orbFloat 4s ease-in-out 0.2s infinite reverse; }
+    .p5 { width:4px; height:4px; background:var(--gold); top:40px; left:-10px; animation:orbFloat 3.3s ease-in-out 0.8s infinite; }
+
+    /* Stars burst container */
+    #stars {
+      position: absolute;
+      inset: -30px;
+      pointer-events: none;
+      border-radius: 50%;
+    }
+
+    .hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    /* Result card */
+    .result-card {
+      display: none;
+      width: 100%;
+      animation: fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .result-inner {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .result-row {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .result-row + .result-row {
+      border-top: 0.5px solid var(--border);
+    }
+
+    .result-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .result-icon.good { background: rgba(59,109,17,0.2); color: #97C459; border: 0.5px solid rgba(59,109,17,0.35); }
+    .result-icon.bad  { background: rgba(163,45,45,0.2); color: #F09595; border: 0.5px solid rgba(163,45,45,0.35); }
+
+    .result-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .result-label.good { color: #97C459; }
+    .result-label.bad  { color: #F09595; }
+
+    .result-text {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .result-footer {
+      text-align: center;
+      margin-top: 14px;
+    }
+
+    .btn-again {
+      background: transparent;
+      border: 0.5px solid var(--border);
+      color: var(--text-secondary);
+      padding: 9px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: 'Noto Serif TC', serif;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .btn-again:hover { background: var(--surface2); border-color: rgba(127,119,221,0.5); color: var(--text-primary); }
+
+    /* Footer */
+    .page-footer {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+    }
+
+    /* Animations */
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+    @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    @keyframes orbFloat {
+      0%{transform:translate(0,0)} 25%{transform:translate(6px,-5px)} 50%{transform:translate(0,-10px)} 75%{transform:translate(-6px,-5px)} 100%{transform:translate(0,0)}
+    }
+    @keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+    @keyframes fadeSlideUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes starPop { 0%{opacity:0;transform:scale(0) rotate(0deg)} 60%{opacity:1;transform:scale(1.2) rotate(180deg)} 100%{opacity:0;transform:scale(1) rotate(360deg)} }
+    @keyframes orbPulse { 0%,100%{box-shadow:0 0 30px rgba(83,74,183,0.4),0 0 60px rgba(83,74,183,0.15),inset 0 0 20px rgba(175,169,236,0.1)} 50%{box-shadow:0 0 45px rgba(83,74,183,0.6),0 0 80px rgba(83,74,183,0.25),inset 0 0 30px rgba(175,169,236,0.2)} }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="header">
+      <div class="header-maple">✦ MapleStory ✦</div>
+      <h1>今日楓之谷算卦系統</h1>
+      <p class="header-sub">每日一卦，助你楓途順遂</p>
+      <div class="divider" style="margin: 0 auto;">
+        <div class="divider-line"></div>
+        <div class="divider-dot"></div>
+        <div class="divider-line"></div>
+      </div>
+    </header>
+
+    <div class="orb-wrapper" onclick="drawFortune()" title="點我算卦">
+      <div class="orb-outer-ring"></div>
+      <div class="orb-outer-ring-2"></div>
+      <div class="orb" id="orb" style="animation:orbPulse 3s ease-in-out infinite;">🔮</div>
+      <div class="particle p1"></div>
+      <div class="particle p2"></div>
+      <div class="particle p3"></div>
+      <div class="particle p4"></div>
+      <div class="particle p5"></div>
+      <div id="stars"></div>
+    </div>
+
+    <p class="hint" id="hint">點擊水晶球算一卦</p>
+
+    <div class="result-card" id="result-card">
+      <div class="result-inner">
+        <div class="result-row">
+          <div class="result-icon good">✦</div>
+          <div>
+            <div class="result-label good">今日宜</div>
+            <div class="result-text" id="good-text"></div>
+          </div>
+        </div>
+        <div class="result-row">
+          <div class="result-icon bad">✗</div>
+          <div>
+            <div class="result-label bad">今日不宜</div>
+            <div class="result-text" id="bad-text"></div>
+          </div>
+        </div>
+      </div>
+      <div class="result-footer">
+        <button class="btn-again" onclick="drawFortune()">再算一卦 ↺</button>
+      </div>
+    </div>
+
+    <footer class="page-footer">楓之谷 · 神諭系統 · 僅供娛樂</footer>
+
+  </div>
+
+  <script>
+    const goodThings = [
+      "橘裝裸衝18星一次成功，省下一億楓幣",
+      "合成出暴傷楓底，紋章直接5級",
+      "潛能一洗就出暴傷9.5%，綠潛完美收手",
+      "混沌超越一次過關，死靈直升航海",
+      "烙印正紋暴傷，不需要再多花痕跡",
+      "副武魯壁安10等大成功，終傷+5%",
+      "抽金蘋果開出死靈武器，賣掉爆富",
+      "發光超越石4件齊備，古代順利升50等",
+      "打史烏掉口紅控制器，靈魂附魔暴傷滿分",
+      "困梅格耐斯順利完成，黑色超新星入手",
+      "綠潛一洗物魔傷4.1%，護肩完美達標",
+      "混沌地城碎片農滿150個，古代結晶製作成功",
+      "合成防具出女皇屬性，超越路線大省成本",
+      "飾品滿星自動升底，暴傷紋章一級即拿",
+      "今日超越石製作連中兩次40%，存貨大豐收",
+      "極限屬性升滿終傷25等，追傷段數達15段",
+      "困希拉擊倒，地獄火花耳環一次入手",
+      "阿卡伊農項鍊掉落，飾品大洞補齊",
+      "今日合成出暴傷紅武，烙印目標確立",
+      "混沌威爾擊倒，硬幣大豐收",
+      "露希妲順利討伐，夢幻腰帶入手",
+      "星火罕見一洗就出物魔攻，武器暴力提升",
+      "今日潛能石用完前洗出暴傷武潛，楓幣全回",
+      "寶石補齊SS格，攻擊追加效果提升",
+      "抽皇家風格抽到S套，賣掉換一大筆楓幣",
+      "真希拉項鍊掉落，飾品配置更上一層",
+      "今日出雙排無視防禦星火，省下大量課金",
+      "分身24小時掛圖無中斷，楓幣進帳翻倍"
+    ];
+
+    const badThings = [
+      "橘裝衝19星連爆三次，傳承費用燒掉兩億",
+      "星火洗來洗去全是B防，罕見星火打水漂",
+      "合成紅武連出B傷屬性，當肥料賣掉心在淌血",
+      "史烏打了三週，航海師硬幣差4個才夠",
+      "潛能狂洗狂出MP，橘潛用光換不到暴傷",
+      "烙印卷軸連續歪紋，武器變成物魔攻廢底",
+      "靈魂附魔石砸下去，武器大傷一點都沒給",
+      "魯壁安10等連續失敗五次，250顆全打水漂",
+      "副武分解只出100片碎片，紋章升級遙遙無期",
+      "混沌超越石做了四件，升航海連續失敗扣除用盡",
+      "極限屬性全點了終傷，才發現打王要先點追傷",
+      "困梅格耐斯打完掉落空包彈，梅格徽章還是沒有",
+      "綠潛洗帽子洗出物魔攻6.3%，不是要的無視防禦",
+      "空間邊界忘記進去，白白浪費一小時最高效率經驗",
+      "抽高級寶箱抽了20連，副武全是罕見歪紋的",
+      "合成綠武升紅武綁定角色，忘記用剪刀直接傳倉失敗",
+      "古代製作死靈失敗三次，扣除卷軸材料全用光",
+      "今日潛能大洗，三排全出HP/MP毫無用處",
+      "發光超越石耗盡4件，古代依舊卡在46等",
+      "分身忘記掛圖睡了8小時，今日楓幣目標落空",
+      "買了一堆升階石想升楓底，結果合成先出歪紋底",
+      "抽奇蹟莓果沒出奇蹟黑，合成P寵失敗收場",
+      "飾品狂衝星數，最後一顆衝爆傳承費用不夠用",
+      "混沌遠征組不到隊，今日貝倫血量3兆白看",
+      "靈魂碎片農了兩週，交易所突然漲價買不起",
+      "傳說星火洗手套，洗了30次全是暴率不是暴傷",
+      "今日凡雷恩遠征掉落只有橘版，軍團長套遙遙無期",
+      "連結技能傳授120等分身養了一堆，結果點錯職業群",
+      "今日144星圖位置全被外掛佔滿，只能轉去147忍耐",
+      "紅E裝以為能直接用，升階後才發現綁定無法交易"
+    ];
+
+    function spawnStars() {
+      const container = document.getElementById('stars');
+      container.innerHTML = '';
+      const symbols = ['✦','★','✧','◆','⬟','✶'];
+      const colors = ['#FAC775','#AFA9EC','#5DCAA5','#F4C0D1','#7F77DD'];
+      for (let i = 0; i < 10; i++) {
+        const angle = (i / 10) * Math.PI * 2 + Math.random() * 0.3;
+        const dist = 70 + Math.random() * 25;
+        const cx = 95, cy = 95;
+        const x = cx + Math.cos(angle) * dist - 8;
+        const y = cy + Math.sin(angle) * dist - 8;
+        const s = document.createElement('div');
+        s.style.cssText = `
+          position:absolute;
+          left:${x}px; top:${y}px;
+          font-size:${10 + Math.random()*8}px;
+          color:${colors[i % colors.length]};
+          animation:starPop 0.8s ease-out ${i * 0.06}s both;
+          pointer-events:none;
+        `;
+        s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+        container.appendChild(s);
+      }
+      setTimeout(() => container.innerHTML = '', 1200);
+    }
+
+    function drawFortune() {
+      const orb = document.getElementById('orb');
+      const hint = document.getElementById('hint');
+      const card = document.getElementById('result-card');
+
+      orb.style.transform = 'scale(0.88)';
+      setTimeout(() => orb.style.transform = '', 160);
+
+      spawnStars();
+
+      const good = goodThings[Math.floor(Math.random() * goodThings.length)];
+      const bad = badThings[Math.floor(Math.random() * badThings.length)];
+
+      hint.style.display = 'none';
+
+      document.getElementById('good-text').textContent = good;
+      document.getElementById('bad-text').textContent = bad;
+
+      card.style.display = 'block';
+      card.style.animation = 'none';
+      void card.offsetWidth;
+      card.style.animation = 'fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+    }
+  </script>
+</body>
+</html>
